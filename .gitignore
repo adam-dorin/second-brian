@@ -1,0 +1,8 @@
+node_modules/
+brain.sqlite
+brain.sqlite-wal
+brain.sqlite-shm
+.backup/
+.env
+# transformers.js model cache
+.cache/

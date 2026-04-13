@@ -1,0 +1,26 @@
+{
+  "name": "second-brian",
+  "version": "1.0.0",
+  "description": "The better brain",
+  "type": "module",
+  "bin": {
+    "brain": "./src/cli.js"
+  },
+  "scripts": {
+    "test": "node --test --env-file=.env test/*.test.js",
+    "start": "node --env-file=.env src/server.js",
+    "start:mcp": "node --env-file=.env src/mcp.js",
+    "setup": "node setup-mcp.js",
+    "backup": "node scripts/backup-db.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.88.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@xenova/transformers": "^2.17.2",
+    "better-sqlite3": "^12.9.0",
+    "fastify": "^5.8.4",
+    "franc": "^6.2.0",
+    "sqlite-vec": "^0.1.9",
+    "zod": "^4.3.6"
+  }
+}
