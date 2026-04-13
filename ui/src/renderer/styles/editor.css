@@ -1,0 +1,237 @@
+/* ── Override Milkdown / Nord theme to match our dark design ────────────────── */
+
+/* Container */
+.milkdown {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Editable area */
+.milkdown .ProseMirror {
+  padding: 0 !important;
+  background: transparent !important;
+  color: var(--text) !important;
+  font-family: var(--font-sans) !important;
+  font-size: 15px !important;
+  line-height: 1.75 !important;
+  caret-color: var(--accent) !important;
+  outline: none !important;
+  min-height: 60vh;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror h1,
+.milkdown .ProseMirror h2,
+.milkdown .ProseMirror h3,
+.milkdown .ProseMirror h4,
+.milkdown .ProseMirror h5,
+.milkdown .ProseMirror h6 {
+  color: var(--text) !important;
+  font-weight: 700 !important;
+  line-height: 1.3 !important;
+  margin-top: 1.6em !important;
+  margin-bottom: 0.5em !important;
+}
+
+.milkdown .ProseMirror h1 {
+  font-size: 2em !important;
+}
+.milkdown .ProseMirror h2 {
+  font-size: 1.5em !important;
+}
+.milkdown .ProseMirror h3 {
+  font-size: 1.2em !important;
+}
+
+/* Anchor for headings are handled by milkdown – neutralize color */
+.milkdown .ProseMirror h1 a,
+.milkdown .ProseMirror h2 a,
+.milkdown .ProseMirror h3 a {
+  color: inherit !important;
+  text-decoration: none !important;
+}
+
+.milkdown .ProseMirror p {
+  margin-bottom: 0.85em !important;
+  color: var(--text) !important;
+}
+
+.milkdown .ProseMirror strong {
+  color: var(--text) !important;
+  font-weight: 700 !important;
+}
+
+.milkdown .ProseMirror em {
+  color: var(--purple) !important;
+}
+
+.milkdown .ProseMirror del {
+  text-decoration: line-through !important;
+  color: var(--text-muted) !important;
+}
+
+/* ── Code ──────────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror code {
+  font-family: var(--font-mono) !important;
+  font-size: 0.875em !important;
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 4px !important;
+  padding: 0.1em 0.4em !important;
+  color: var(--blue) !important;
+}
+
+.milkdown .ProseMirror pre {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  padding: 14px 16px !important;
+  margin: 1em 0 !important;
+  overflow-x: auto !important;
+}
+
+.milkdown .ProseMirror pre code {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  color: var(--text) !important;
+  font-size: 13px !important;
+}
+
+/* ── Blockquote ────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror blockquote {
+  border-left: 3px solid var(--accent) !important;
+  padding: 6px 0 6px 16px !important;
+  margin: 1em 0 !important;
+  color: var(--text-muted) !important;
+  background: transparent !important;
+}
+
+/* ── Lists ──────────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror ul,
+.milkdown .ProseMirror ol {
+  padding-left: 1.6em !important;
+  margin-bottom: 0.85em !important;
+}
+
+.milkdown .ProseMirror li {
+  margin-bottom: 0.3em !important;
+  color: var(--text) !important;
+}
+
+.milkdown .ProseMirror ul li {
+  list-style: disc !important;
+}
+.milkdown .ProseMirror ol li {
+  list-style: decimal !important;
+}
+
+/* ── Links ──────────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror a {
+  color: var(--blue) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 2px !important;
+}
+
+/* ── HR ─────────────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror hr {
+  border: none !important;
+  border-top: 1px solid var(--border) !important;
+  margin: 2em 0 !important;
+}
+
+/* ── Tables ─────────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror table {
+  width: 100% !important;
+  border-collapse: collapse !important;
+  margin: 1em 0 !important;
+  font-size: 13px !important;
+}
+
+.milkdown .ProseMirror th,
+.milkdown .ProseMirror td {
+  border: 1px solid var(--border) !important;
+  padding: 6px 12px !important;
+  color: var(--text) !important;
+}
+
+.milkdown .ProseMirror th {
+  background: var(--bg-elevated) !important;
+  font-weight: 600 !important;
+}
+
+.milkdown .ProseMirror td {
+  background: transparent !important;
+}
+.milkdown .ProseMirror tr:hover td {
+  background: var(--bg-elevated) !important;
+}
+
+/* ── Checkbox tasks ─────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror .task-list-item {
+  list-style: none !important;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.milkdown .ProseMirror .task-list-item input[type="checkbox"] {
+  accent-color: var(--accent) !important;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Selection ──────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror ::selection {
+  background: rgba(124, 106, 247, 0.3) !important;
+}
+
+/* ── Placeholder ────────────────────────────────────────────────────────────── */
+.milkdown .ProseMirror.ProseMirror-empty::before {
+  content: attr(data-placeholder);
+  color: var(--text-faint) !important;
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+/* ── Milkdown tooltip / menu ────────────────────────────────────────────────── */
+.milkdown-menu,
+.milkdown-tooltip,
+[data-milkdown-root] .tippy-box {
+  background: var(--bg-elevated) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45) !important;
+  color: var(--text) !important;
+}
+
+/* ── Nord color variable overrides ──────────────────────────────────────────── */
+.milkdown {
+  --nord0: var(--bg-base);
+  --nord1: var(--bg-surface);
+  --nord2: var(--bg-elevated);
+  --nord3: var(--bg-overlay);
+  --nord4: var(--text-muted);
+  --nord5: var(--text-muted);
+  --nord6: var(--text);
+  --nord7: var(--green);
+  --nord8: var(--blue);
+  --nord9: var(--blue);
+  --nord10: var(--accent);
+  --nord11: var(--red);
+  --nord12: var(--yellow);
+  --nord13: var(--yellow);
+  --nord14: var(--green);
+  --nord15: var(--purple);
+  --background: var(--bg-base);
+  --surface: var(--bg-surface);
+  --shadow: 0 4px 32px rgba(0, 0, 0, 0.4);
+  --primary: var(--accent);
+  --secondary: var(--text-muted);
+  --solid: var(--text);
+  --neutral: var(--border);
+  --line: var(--border);
+}
