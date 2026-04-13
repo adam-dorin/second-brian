@@ -1,15 +1,6 @@
 import { z } from "zod";
 import { getContexts } from "./db.js";
-import {
-  capture,
-  search,
-  recent,
-  confirm,
-  dispute,
-  getReviewQueue,
-  detectPatterns,
-  generateDigest,
-} from "./core.js";
+import { capture, search, recent, confirm, dispute, getReviewQueue, detectPatterns, generateDigest } from "./core.js";
 
 /**
  * Register all brain tools onto an McpServer instance.
@@ -23,8 +14,7 @@ export function registerTools(server, db) {
     "search_brain",
     {
       title: "Search Brain",
-      description:
-        "Semantically search the second brain. Returns thoughts ranked by relevance, with quality warnings where applicable.",
+      description: "Semantically search the second brain. Returns thoughts ranked by relevance, with quality warnings where applicable.",
       inputSchema: {
         query: z.string().describe("Natural language search query (English or Romanian)"),
         context: z.string().optional().describe("Bias results toward a specific context (e.g. work, gamedev)"),
@@ -66,17 +56,13 @@ export function registerTools(server, db) {
     "capture_thought",
     {
       title: "Capture Thought",
-      description:
-        "Save a thought, note, or piece of knowledge to the second brain. Embedding happens in the background.",
+      description: "Save a thought, note, or piece of knowledge to the second brain. Embedding happens in the background.",
       inputSchema: {
         text: z.string().describe("The content to capture"),
-        context: z.string().optional().describe("Context: work, passion, gamedev, or any configured context"),
+        context: z.string().optional().describe("Context: work, passion,  or any configured context"),
         project: z.string().optional().describe("Project name this thought belongs to"),
         topics: z.array(z.string()).optional().describe("Tags for this thought"),
-        source_type: z
-          .enum(["firsthand", "secondhand", "read", "assumed"])
-          .optional()
-          .describe("How reliable is this knowledge?"),
+        source_type: z.enum(["firsthand", "secondhand", "read", "assumed"]).optional().describe("How reliable is this knowledge?"),
       },
     },
     async ({ text, context, project, topics, source_type }) => {
@@ -155,8 +141,7 @@ export function registerTools(server, db) {
     "review_queue",
     {
       title: "Review Queue",
-      description:
-        "Return thoughts that need review: disputed, volatile, versioned-but-active, dead knowledge, or high-hit medium confidence.",
+      description: "Return thoughts that need review: disputed, volatile, versioned-but-active, dead knowledge, or high-hit medium confidence.",
       inputSchema: {
         limit: z.number().int().positive().optional().default(10),
       },

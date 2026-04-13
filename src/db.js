@@ -52,11 +52,6 @@ function migrate(db) {
         created_at TEXT DEFAULT (datetime('now'))
       );
 
-      INSERT OR IGNORE INTO contexts (name, description) VALUES
-        ('work',    'Professional work tasks and knowledge'),
-        ('passion', 'Personal passion projects'),
-        ('gamedev', 'Game development');
-
       -- Primary thoughts table
       CREATE TABLE IF NOT EXISTS thoughts (
         id            INTEGER PRIMARY KEY,
