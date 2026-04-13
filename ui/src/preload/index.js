@@ -1,6 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 
-const API = "http://127.0.0.1:8741";
+const PORT = process.env.PORT ?? "8741";
+const HOST = process.env.HOST ?? "127.0.0.1";
+const API = `http://${HOST}:${PORT}`;
 const secret = process.env.MCP_SECRET;
 
 function headers(extra = {}) {
@@ -82,4 +84,10 @@ contextBridge.exposeInMainWorld("fs", {
   read: (filePath) => ipcRenderer.invoke("fs:read", { filePath }),
   showSaveDialog: (defaultName) => ipcRenderer.invoke("dialog:save", { defaultName }),
   showOpenDialog: () => ipcRenderer.invoke("dialog:open"),
+});
+
+// ─── Env settings (via IPC) ───────────────────────────────────────────────────
+contextBridge.exposeInMainWorld("env", {
+  read: () => ipcRenderer.invoke("env:read"),
+  save: (vars) => ipcRenderer.invoke("env:save", { vars }),
 });

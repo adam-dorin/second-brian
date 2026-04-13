@@ -21,7 +21,7 @@ import "@milkdown/theme-nord/style.css";
 
 let editorInstance = null;
 
-const WELCOME = `# Welcome to Second Brain
+const WELCOME = `# Welcome to Second Brian — the better brain!
 
 Start capturing your thoughts. This editor works like **Typora** — write markdown and it renders inline.
 

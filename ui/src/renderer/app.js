@@ -1,9 +1,10 @@
 import "./styles/main.css";
 import "./styles/editor.css";
 import { initEditor } from "./editor.js";
-import { initSidebar, populateContextSelects } from "./sidebar.js";
+import { initSidebar, populateContextSelects, initContextManager } from "./sidebar.js";
 import { initPanels } from "./panels.js";
 import { initContextMenu } from "./contextmenu.js";
+import { initSettings } from "./settings.js";
 
 // ─── App state ────────────────────────────────────────────────────────────────
 const state = {
@@ -36,6 +37,13 @@ async function init() {
     },
   });
 
+  initContextManager({
+    onChanged: async () => {
+      const contexts = await window.brain.listContexts();
+      populateContextSelects(contexts);
+    },
+  });
+
   initPanels({
     onThoughtLoad(thought) {
       editor.setMarkdown(thought.text);
@@ -47,6 +55,7 @@ async function init() {
   });
 
   initContextMenu(editor);
+  initSettings();
 
   // ── Toolbar ────────────────────────────────────────────────────────────────
   document.getElementById("toolbar").addEventListener("click", (e) => {

@@ -113,3 +113,105 @@ export function populateContextSelects(contexts) {
     if ([...sel.options].some((o) => o.value === prev)) sel.value = prev;
   });
 }
+
+export function initContextManager({ onChanged }) {
+  const btn = document.getElementById("btn-manage-contexts");
+  const popup = document.getElementById("context-manager");
+  const list = document.getElementById("ctx-mgr-list");
+  const nameInput = document.getElementById("ctx-mgr-name");
+  const descInput = document.getElementById("ctx-mgr-desc");
+  const btnAdd = document.getElementById("btn-add-context");
+  const btnClose = document.getElementById("btn-close-ctx-mgr");
+
+  if (!btn || !popup) return;
+
+  async function renderList() {
+    list.innerHTML = "";
+    try {
+      const contexts = await window.brain.listContexts();
+      if (!contexts.length) {
+        list.innerHTML = '<li class="ctx-mgr-empty">No contexts yet.</li>';
+        return;
+      }
+      for (const ctx of contexts) {
+        const li = document.createElement("li");
+        li.className = "ctx-mgr-item";
+        li.innerHTML = `
+          <div class="ctx-mgr-item-body">
+            <span class="ctx-mgr-item-name">${escapeHtml(ctx.name)}</span>
+            ${ctx.description ? `<span class="ctx-mgr-item-desc" title="${escapeHtml(ctx.description)}">${escapeHtml(ctx.description)}</span>` : ""}
+          </div>
+          <button class="ctx-mgr-del icon-btn" title="Delete \u201c${escapeHtml(ctx.name)}\u201d" data-name="${escapeHtml(ctx.name)}">&#x2715;</button>
+        `;
+        li.querySelector(".ctx-mgr-del").addEventListener("click", async () => {
+          if (!confirm(`Delete context \u201c${ctx.name}\u201d?\n\nThis won\u2019t delete thoughts inside it.`)) return;
+          try {
+            await window.brain.deleteContext(ctx.name);
+            await renderList();
+            await onChanged();
+          } catch (err) {
+            alert(`Error: ${err.message}`);
+          }
+        });
+        list.appendChild(li);
+      }
+    } catch {
+      list.innerHTML = '<li class="ctx-mgr-empty">Failed to load contexts.</li>';
+    }
+  }
+
+  function openPopup() {
+    popup.removeAttribute("hidden");
+    positionPopup();
+    renderList();
+    nameInput.focus();
+  }
+
+  function closePopup() {
+    popup.setAttribute("hidden", "");
+  }
+
+  function positionPopup() {
+    const rect = btn.getBoundingClientRect();
+    popup.style.top = rect.bottom + 6 + "px";
+    popup.style.left = rect.left + "px";
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (!popup.hidden) {
+      closePopup();
+      return;
+    }
+    openPopup();
+  });
+
+  btnClose.addEventListener("click", closePopup);
+
+  document.addEventListener("mousedown", (e) => {
+    if (!popup.hidden && !popup.contains(e.target) && e.target !== btn) {
+      closePopup();
+    }
+  });
+
+  btnAdd.addEventListener("click", async () => {
+    const name = nameInput.value.trim();
+    if (!name) {
+      nameInput.focus();
+      return;
+    }
+    try {
+      await window.brain.addContext({ name, description: descInput.value.trim() || undefined });
+      nameInput.value = "";
+      descInput.value = "";
+      await renderList();
+      await onChanged();
+    } catch (err) {
+      alert(`Error: ${err.message}`);
+    }
+  });
+
+  nameInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") btnAdd.click();
+  });
+}
