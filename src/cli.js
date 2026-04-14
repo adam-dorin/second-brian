@@ -11,6 +11,7 @@ import {
   dispute,
   markReviewed,
   getThought,
+  updateThought,
   getReviewQueue,
   detectPatterns,
   generateDigest,
@@ -109,6 +110,10 @@ ${BOLD("brain")} — local-first second brain
 ${BOLD("Capture")}
   brain add <text> [--context <ctx>] [--project <name>] [--topics a,b,c]
                    [--source secondhand|read|assumed]
+
+${BOLD("Edit")}
+  brain update <id> [--text "new text"] [--context <ctx>] [--project <name>]
+                    [--topics a,b,c] [--source <type>] [--confidence high|medium|low]
 
 ${BOLD("Search")}
   brain search <query> [--context <ctx>] [--project <name>] [--limit N]
@@ -261,7 +266,40 @@ async function main() {
     process.exit(0);
   }
 
-  // ── get ───────────────────────────────────────────────────────────────────
+  // ── update ───────────────────────────────────────────────────────────────
+
+  if (cmd === "update") {
+    const id = Number(rest[0]);
+    if (!id) { console.error('Usage: brain update <id> [--text "..."] [--context x] ...'); process.exit(1); }
+
+    const fields = {};
+    if (flags.text !== undefined) fields.text = String(flags.text);
+    if (flags.context !== undefined) fields.context = flags.context || null;
+    if (flags.project !== undefined) fields.project = flags.project || null;
+    if (flags.topics !== undefined) fields.topics = flags.topics.split(",").map((t) => t.trim());
+    if (flags.source !== undefined) fields.source_type = flags.source;
+    if (flags.confidence !== undefined) fields.confidence = flags.confidence;
+
+    if (Object.keys(fields).length === 0) {
+      console.error(RED("  No fields to update. Provide at least one flag."));
+      process.exit(1);
+    }
+
+    const ok = updateThought(db, id, fields);
+    if (!ok) { console.log(RED(`  ✗ #${id} not found`)); process.exit(1); }
+
+    console.log(GREEN(`  ✓ #${id} updated`));
+    console.log();
+    printThought(getThought(db, id));
+
+    if (fields.text) {
+      startEmbedWorker(db);
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    process.exit(0);
+  }
+
+    // ── get ───────────────────────────────────────────────────────────────────
 
   if (cmd === "get") {
     const id = Number(rest[0]);

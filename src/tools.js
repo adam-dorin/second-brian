@@ -15,12 +15,12 @@ export function registerTools(server, db) {
     {
       title: "Search Brain",
       description: "Semantically search the second brain. Returns thoughts ranked by relevance, with quality warnings where applicable.",
-      inputSchema: {
+      inputSchema: z.object({
         query: z.string().describe("Natural language search query (English or Romanian)"),
         context: z.string().optional().describe("Bias results toward a specific context (e.g. work, gamedev)"),
         project: z.string().optional().describe("Filter to a specific project"),
         limit: z.number().int().positive().optional().default(5),
-      },
+      }),
     },
     async ({ query, context, project, limit }) => {
       const results = await search(db, query, { context, project, limit });
@@ -57,13 +57,13 @@ export function registerTools(server, db) {
     {
       title: "Capture Thought",
       description: "Save a thought, note, or piece of knowledge to the second brain. Embedding happens in the background.",
-      inputSchema: {
+      inputSchema: z.object({
         text: z.string().describe("The content to capture"),
         context: z.string().optional().describe("Context: work, passion,  or any configured context"),
         project: z.string().optional().describe("Project name this thought belongs to"),
         topics: z.array(z.string()).optional().describe("Tags for this thought"),
         source_type: z.enum(["firsthand", "secondhand", "read", "assumed"]).optional().describe("How reliable is this knowledge?"),
-      },
+      }),
     },
     async ({ text, context, project, topics, source_type }) => {
       const { id } = capture(db, text, { context, project, topics, source_type });
@@ -80,10 +80,10 @@ export function registerTools(server, db) {
     {
       title: "Recent Thoughts",
       description: "Browse recently captured thoughts, optionally filtered by context.",
-      inputSchema: {
+      inputSchema: z.object({
         context: z.string().optional(),
         limit: z.number().int().positive().optional().default(10),
-      },
+      }),
     },
     async ({ context, limit }) => {
       const results = recent(db, { context, limit });
@@ -101,7 +101,7 @@ export function registerTools(server, db) {
       title: "Surface Patterns",
       description:
         "Detect recurring patterns in the knowledge base: topic spikes, cross-context clusters, recurring unsolved items, and dormant high-value knowledge.",
-      inputSchema: {},
+      inputSchema: z.object({}),
     },
     async () => {
       const patterns = await detectPatterns(db);
@@ -119,7 +119,7 @@ export function registerTools(server, db) {
       title: "Weekly Digest",
       description:
         "Generate a Claude-powered weekly digest summarizing patterns and surfacing cross-context connections. Requires ANTHROPIC_API_KEY.",
-      inputSchema: {},
+      inputSchema: z.object({}),
     },
     async () => {
       if (!process.env.ANTHROPIC_API_KEY) {
@@ -142,9 +142,9 @@ export function registerTools(server, db) {
     {
       title: "Review Queue",
       description: "Return thoughts that need review: disputed, volatile, versioned-but-active, dead knowledge, or high-hit medium confidence.",
-      inputSchema: {
+      inputSchema: z.object({
         limit: z.number().int().positive().optional().default(10),
-      },
+      }),
     },
     async ({ limit }) => {
       const queue = getReviewQueue(db, limit);
@@ -161,7 +161,7 @@ export function registerTools(server, db) {
     {
       title: "Confirm Thought",
       description: "Mark a thought as confirmed (high confidence).",
-      inputSchema: { id: z.number().int() },
+      inputSchema: z.object({ id: z.number().int() }),
     },
     async ({ id }) => {
       const ok = confirm(db, id);
@@ -178,7 +178,7 @@ export function registerTools(server, db) {
     {
       title: "Dispute Thought",
       description: "Mark a thought as disputed (low confidence).",
-      inputSchema: { id: z.number().int() },
+      inputSchema: z.object({ id: z.number().int() }),
     },
     async ({ id }) => {
       const ok = dispute(db, id);
@@ -195,7 +195,7 @@ export function registerTools(server, db) {
     {
       title: "List Contexts",
       description: "List available contexts configured in the brain.",
-      inputSchema: {},
+      inputSchema: z.object({}),
     },
     async () => {
       const contexts = getContexts(db);

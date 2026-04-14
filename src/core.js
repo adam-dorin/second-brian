@@ -48,7 +48,12 @@ export function capture(db, text, hints = {}) {
 export async function search(db, query, opts = {}) {
   const { context = null, project = null, limit = 10, boost = 0.3 } = opts;
 
-  const queryVec = await embed(query);
+  let queryVec;
+  try {
+    queryVec = await embed(query);
+  } catch (err) {
+    throw Object.assign(new Error("Embedding model unavailable: " + err.message), { statusCode: 503 });
+  }
 
   let sql = `
     SELECT t.*,
@@ -142,6 +147,51 @@ export function markReviewed(db, id) {
 export function getThought(db, id) {
   const row = db.prepare("SELECT * FROM thoughts WHERE id = ?").get(id);
   return row ? formatThought(row) : null;
+}
+
+// ─── Update ───────────────────────────────────────────────────────────────────
+
+/**
+ * Partially update a thought. Only provided fields are changed.
+ * If `text` changes the embedding is invalidated and re-queued.
+ * staleness is excluded — it is always re-inferred from the new text at capture.
+ *
+ * @param {import('better-sqlite3').Database} db
+ * @param {number} id
+ * @param {{ text?: string, context?: string, project?: string,
+ *           topics?: string[], source_type?: string, confidence?: string }} fields
+ * @returns {boolean} false if not found
+ */
+export function updateThought(db, id, fields) {
+  const allowed = ["text", "context", "project", "source_type", "confidence"];
+  const setClauses = [];
+  const values = [];
+
+  for (const key of allowed) {
+    if (key in fields) {
+      setClauses.push(`${key} = ?`);
+      values.push(fields[key] ?? null);
+    }
+  }
+
+  if ("topics" in fields) {
+    setClauses.push("topics = ?");
+    values.push(JSON.stringify(fields.topics ?? []));
+  }
+
+  if (setClauses.length === 0) return getThought(db, id) !== null;
+
+  // Text changed — invalidate embedding so it gets re-queued
+  if ("text" in fields) {
+    setClauses.push("embedded = 0");
+    setClauses.push("vec_rowid = NULL");
+  }
+
+  values.push(id);
+  const info = db
+    .prepare(`UPDATE thoughts SET ${setClauses.join(", ")} WHERE id = ?`)
+    .run(...values);
+  return info.changes > 0;
 }
 
 // ─── Review Queue ─────────────────────────────────────────────────────────────

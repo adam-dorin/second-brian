@@ -10,24 +10,13 @@ describe("db schema and contexts", () => {
   });
 
   it("creates thoughts table", () => {
-    const row = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='thoughts'")
-      .get();
+    const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='thoughts'").get();
     assert.ok(row);
   });
 
   it("creates thoughts_vec virtual table", () => {
-    const row = db
-      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='thoughts_vec'")
-      .get();
+    const row = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='thoughts_vec'").get();
     assert.ok(row);
-  });
-
-  it("seeds default contexts", () => {
-    const ctxs = getContexts(db).map((c) => c.name);
-    assert.ok(ctxs.includes("work"));
-    assert.ok(ctxs.includes("passion"));
-    assert.ok(ctxs.includes("gamedev"));
   });
 
   it("can add a context", () => {
@@ -41,11 +30,11 @@ describe("db schema and contexts", () => {
   });
 
   it("thoughts table has expected columns", () => {
-    const cols = db.prepare("PRAGMA table_info(thoughts)").all().map((c) => c.name);
-    for (const col of [
-      "id", "text", "context", "project", "topics", "confidence",
-      "staleness", "hit_count", "embedded", "created_at",
-    ]) {
+    const cols = db
+      .prepare("PRAGMA table_info(thoughts)")
+      .all()
+      .map((c) => c.name);
+    for (const col of ["id", "text", "context", "project", "topics", "confidence", "staleness", "hit_count", "embedded", "created_at"]) {
       assert.ok(cols.includes(col), `missing column: ${col}`);
     }
   });

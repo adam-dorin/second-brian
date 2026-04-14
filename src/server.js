@@ -11,6 +11,7 @@ import {
   confirm,
   dispute,
   getThought,
+  updateThought,
   getReviewQueue,
   detectPatterns,
   generateDigest,
@@ -94,6 +95,42 @@ app.get("/thoughts/:id", async (req, reply) => {
   const thought = getThought(db, id);
   if (!thought) return reply.code(404).send({ error: `#${id} not found` });
   return thought;
+});
+
+app.patch("/thoughts/:id", async (req, reply) => {
+  const id = Number(req.params.id);
+  const { text, context, project, topics, source_type, confidence } = req.body ?? {};
+
+  const fields = {};
+  if (text !== undefined) {
+    if (typeof text !== "string" || !text.trim())
+      return reply.code(400).send({ error: "text must be a non-empty string" });
+    fields.text = text.trim();
+  }
+  if (context !== undefined) fields.context = context;
+  if (project !== undefined) fields.project = project;
+  if (topics !== undefined) {
+    if (!Array.isArray(topics))
+      return reply.code(400).send({ error: "topics must be an array" });
+    fields.topics = topics;
+  }
+  if (source_type !== undefined) fields.source_type = source_type;
+  if (confidence !== undefined) {
+    if (!["high", "medium", "low"].includes(confidence))
+      return reply.code(400).send({ error: "confidence must be high|medium|low" });
+    fields.confidence = confidence;
+  }
+
+  if (Object.keys(fields).length === 0) {
+    return reply.code(400).send({ error: "No valid fields provided" });
+  }
+
+  const ok = updateThought(db, id, fields);
+  if (!ok) return reply.code(404).send({ error: `#${id} not found` });
+
+  if (fields.text) startEmbedWorker(db);
+
+  return getThought(db, id);
 });
 
 app.patch("/thoughts/:id/confirm", async (req, reply) => {
