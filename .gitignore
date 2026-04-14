@@ -8,3 +8,4 @@ brain.sqlite-shm
 .env
 # transformers.js model cache
 .cache/
+dbs.json
