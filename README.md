@@ -50,6 +50,14 @@ brain add "react 18 concurrent mode removes tearing" --topics react,concurrency
 
 Capture is instant. Embedding runs in the background within a few seconds.
 
+### Edit
+
+```bash
+brain update 42 --text "corrected explanation"
+brain update 42 --confidence high --context work
+brain update 42 --topics godot,rendering
+```
+
 ### Search
 
 ```bash
@@ -101,6 +109,22 @@ brain embed            # manually drain the embed queue
 
 ---
 
+## Electron UI
+
+A desktop app that wraps the local server with an editor, sidebar, and review panels.
+
+```bash
+cd ui
+npm install
+npm start        # dev mode (hot reload)
+npm run build    # production build
+npm run dist     # package as installer
+```
+
+The UI manages its own server process — it starts and stops automatically. Multiple SQLite databases can be configured and switched from within the app without restarting.
+
+---
+
 ## MCP Server
 
 For use with Claude Desktop, Claude Code, or any MCP-compatible agent.
@@ -130,7 +154,7 @@ npm run setup   # prints tailored setup instructions for this machine
 Start the server:
 
 ```bash
-npm start              # http://127.0.0.1:3000
+npm start              # http://127.0.0.1:8741
 ```
 
 ### Thoughts
@@ -142,17 +166,18 @@ npm start              # http://127.0.0.1:3000
 | `GET` | `/thoughts/search` | Semantic search (`?q=&context=&project=&limit=`) |
 | `GET` | `/thoughts/review` | Review queue |
 | `GET` | `/thoughts/:id` | Single thought by ID |
+| `PATCH` | `/thoughts/:id` | Update fields (`text`, `context`, `project`, `topics`, `source_type`) |
 | `PATCH` | `/thoughts/:id/confirm` | Mark as high confidence |
 | `PATCH` | `/thoughts/:id/dispute` | Mark as low confidence |
 
 ```bash
 # capture
-curl -X POST http://localhost:3000/thoughts \
+curl -X POST http://localhost:8741/thoughts \
   -H "Content-Type: application/json" \
   -d '{"text": "near clip plane trick for z-fighting", "context": "gamedev", "topics": ["godot","rendering"]}'
 
 # search
-curl "http://localhost:3000/thoughts/search?q=godot+shaders&context=gamedev"
+curl "http://localhost:8741/thoughts/search?q=godot+shaders&context=gamedev"
 ```
 
 ### Patterns & Digest
@@ -203,24 +228,3 @@ npm test
 
 Uses Node's built-in test runner — no external test framework.
 
----
-
-## Project Structure
-
-```
-src/
-  db.js        schema, migrations, contexts CRUD
-  utils.js     detectVolatile, detectVersionRef, getWarning, inferInitialQuality
-  embed.js     multilingual embedding model, background worker
-  core.js      capture, search, recent, review, patterns, digest
-  cli.js       CLI entry point (brain)
-  server.js    Fastify REST API + MCP over HTTP
-  mcp.js       MCP server (stdio)
-  tools.js     MCP tool definitions (shared between mcp.js and server.js)
-test/
-  utils.test.js
-  db.test.js
-  core.test.js
-setup-mcp.js   prints MCP setup instructions for this machine
-brain.sqlite   local database (gitignored)
-```
