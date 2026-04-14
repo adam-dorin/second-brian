@@ -51,6 +51,9 @@ contextBridge.exposeInMainWorld("brain", {
   reviewQueue(limit = 10) {
     return api(`/thoughts/review?limit=${limit}`);
   },
+  updateThought(id, data) {
+    return api(`/thoughts/${id}`, { method: "PATCH", body: JSON.stringify(data) });
+  },
   confirm(id) {
     return api(`/thoughts/${id}/confirm`, { method: "PATCH" });
   },
@@ -84,6 +87,15 @@ contextBridge.exposeInMainWorld("fs", {
   read: (filePath) => ipcRenderer.invoke("fs:read", { filePath }),
   showSaveDialog: (defaultName) => ipcRenderer.invoke("dialog:save", { defaultName }),
   showOpenDialog: () => ipcRenderer.invoke("dialog:open"),
+  showOpenDbDialog: () => ipcRenderer.invoke("dialog:openDb"),
+});
+
+// ─── DB registry (via IPC) ────────────────────────────────────────────────────
+contextBridge.exposeInMainWorld("db", {
+  list:   ()            => ipcRenderer.invoke("db:list"),
+  add:    (name, path)  => ipcRenderer.invoke("db:add",    { name, path }),
+  remove: (name)        => ipcRenderer.invoke("db:remove", { name }),
+  switch: (name)        => ipcRenderer.invoke("db:switch", { name }),
 });
 
 // ─── Env settings (via IPC) ───────────────────────────────────────────────────

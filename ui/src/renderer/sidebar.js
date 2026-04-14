@@ -100,6 +100,126 @@ export async function initSidebar({ onContextChange, onThoughtSelect }) {
   return { refresh: refreshAll };
 }
 
+// ─── DB selector + manager ───────────────────────────────────────────────────
+export function initDbSelector({ onSwitched }) {
+  const dbSelect  = document.getElementById("db-select");
+  const btn       = document.getElementById("btn-manage-dbs");
+  const popup     = document.getElementById("db-manager");
+  const list      = document.getElementById("db-mgr-list");
+  const nameInput = document.getElementById("db-mgr-name");
+  const pathInput = document.getElementById("db-mgr-path");
+  const btnBrowse = document.getElementById("btn-browse-db");
+  const btnAdd    = document.getElementById("btn-add-db");
+  const btnClose  = document.getElementById("btn-close-db-mgr");
+
+  async function loadAndRender() {
+    const registry = await window.db.list();
+    // Populate select
+    dbSelect.innerHTML = "";
+    for (const d of registry.dbs) {
+      const opt = new Option(d.name, d.name);
+      if (d.name === registry.active) opt.selected = true;
+      dbSelect.appendChild(opt);
+    }
+    // Populate manager list
+    list.innerHTML = "";
+    if (!registry.dbs.length) {
+      list.innerHTML = '<li class="ctx-mgr-empty">No databases.</li>';
+      return;
+    }
+    for (const d of registry.dbs) {
+      const isActive = d.name === registry.active;
+      const li = document.createElement("li");
+      li.className = "ctx-mgr-item";
+      li.innerHTML = `
+        <div class="ctx-mgr-item-body">
+          <span class="ctx-mgr-item-name">${escapeHtml(d.name)}${isActive ? ' <span class="db-active-badge">active</span>' : ""}</span>
+          <span class="ctx-mgr-item-desc" title="${escapeHtml(d.path)}">${escapeHtml(d.path)}</span>
+        </div>
+        <button class="ctx-mgr-del icon-btn" title="Remove" data-name="${escapeHtml(d.name)}" ${isActive ? "disabled" : ""}>&#x2715;</button>
+      `;
+      li.querySelector(".ctx-mgr-del").addEventListener("click", async () => {
+        if (!confirm(`Remove database "${d.name}"?`)) return;
+        try {
+          await window.db.remove(d.name);
+          await loadAndRender();
+        } catch (err) { alert(`Error: ${err.message}`); }
+      });
+      list.appendChild(li);
+    }
+  }
+
+  // Switch DB on select change
+  dbSelect.addEventListener("change", async () => {
+    const name = dbSelect.value;
+    const dot = document.getElementById("status-server");
+    dot.classList.remove("server-ok", "server-err");
+    dot.classList.add("server-connecting");
+    dot.title = "Reconnecting…";
+    try {
+      await window.db.switch(name);
+      dot.classList.remove("server-connecting");
+      dot.classList.add("server-ok");
+      dot.title = "Server connected";
+      onSwitched();
+    } catch (err) {
+      dot.classList.remove("server-connecting");
+      dot.classList.add("server-err");
+      dot.title = `Failed to switch: ${err.message}`;
+    }
+  });
+
+  // Browse for .sqlite file
+  btnBrowse.addEventListener("click", async () => {
+    const { filePath } = await window.fs.showOpenDbDialog();
+    if (filePath) pathInput.value = filePath;
+  });
+
+  // Add new DB entry
+  btnAdd.addEventListener("click", async () => {
+    const name = nameInput.value.trim();
+    const path = pathInput.value.trim();
+    if (!name || !path) { nameInput.focus(); return; }
+    try {
+      await window.db.add(name, path);
+      nameInput.value = "";
+      pathInput.value = "";
+      await loadAndRender();
+    } catch (err) { alert(`Error: ${err.message}`); }
+  });
+
+  nameInput.addEventListener("keydown", (e) => { if (e.key === "Enter") btnAdd.click(); });
+
+  function openPopup() {
+    loadAndRender();
+    popup.removeAttribute("hidden");
+    positionPopup();
+    nameInput.focus();
+  }
+
+  function closePopup() { popup.setAttribute("hidden", ""); }
+
+  function positionPopup() {
+    const rect = btn.getBoundingClientRect();
+    popup.style.top = rect.bottom + 6 + "px";
+    popup.style.left = rect.left + "px";
+  }
+
+  btn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    popup.hidden ? openPopup() : closePopup();
+  });
+
+  btnClose.addEventListener("click", closePopup);
+
+  document.addEventListener("mousedown", (e) => {
+    if (!popup.hidden && !popup.contains(e.target) && e.target !== btn) closePopup();
+  });
+
+  // Initial load
+  loadAndRender();
+}
+
 // ─── Context selects ──────────────────────────────────────────────────────────
 export function populateContextSelects(contexts) {
   const selects = document.querySelectorAll("#context-select, #capture-context");

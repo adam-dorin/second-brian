@@ -17,6 +17,29 @@ const IS_PACKAGED = app.isPackaged;
 const PROJECT_ROOT = IS_PACKAGED ? join(process.resourcesPath, "app") : join(UI_ROOT, "..");
 const envPath = join(PROJECT_ROOT, ".env");
 
+// ─── DB registry ─────────────────────────────────────────────────────────────
+const dbsPath = join(PROJECT_ROOT, "dbs.json");
+
+function loadDbs() {
+  if (!existsSync(dbsPath)) {
+    const defaultPath = process.env.BRAIN_DB_PATH || join(PROJECT_ROOT, "brain.sqlite");
+    const initial = { active: "default", dbs: [{ name: "default", path: defaultPath }] };
+    writeFileSync(dbsPath, JSON.stringify(initial, null, 2), "utf8");
+    return initial;
+  }
+  return JSON.parse(readFileSync(dbsPath, "utf8"));
+}
+
+function saveDbs(registry) {
+  writeFileSync(dbsPath, JSON.stringify(registry, null, 2), "utf8");
+}
+
+// Apply the active DB path into process.env so startServer picks it up.
+function applyActiveDb(registry) {
+  const active = registry.dbs.find((d) => d.name === registry.active);
+  if (active) process.env.BRAIN_DB_PATH = active.path;
+}
+
 const ENV_DEFAULTS = `# Second Brain – configuration
 # Edit via the ⚙ Settings button in the app, or directly in this file.
 # Changes take effect after restarting the app.
@@ -132,7 +155,7 @@ function createWindow() {
       responseHeaders: {
         ...details.responseHeaders,
         "Content-Security-Policy": [
-          `default-src 'self'; connect-src ${apiOrigin} ws://localhost:*; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:`,
+          `default-src 'self'; connect-src 'self' ${apiOrigin} ws://localhost:*; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src-elem 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; script-src 'self' 'unsafe-inline'; img-src 'self' data: blob:`,
         ],
       },
     });
@@ -171,18 +194,13 @@ function createWindow() {
   // Disable pinch-to-zoom / Ctrl+scroll zoom
   mainWindow.webContents.setVisualZoomLevelLimits(1, 1);
 
-  // Prevent Ctrl+/- keyboard zoom
-  mainWindow.webContents.on("before-input-event", (_e, input) => {
-    if (input.control || input.meta) {
-      if (input.key === "+" || input.key === "-" || input.key === "=" || input.key === "0") {
-        _e.preventDefault();
-      }
-    }
-  });
+  // Ctrl+/- are handled in the renderer for editor font sizing.
+  // setVisualZoomLevelLimits(1,1) above already prevents pinch-to-zoom.
 }
 
 // ─── App lifecycle ────────────────────────────────────────────────────────────
 app.whenReady().then(async () => {
+  applyActiveDb(loadDbs());
   startServer();
   await waitForServer(8000);
   createWindow();
@@ -234,6 +252,14 @@ ipcMain.handle("dialog:open", async () => {
       { name: "Markdown", extensions: ["md", "markdown", "txt"] },
       { name: "All Files", extensions: ["*"] },
     ],
+  });
+  return { filePath: canceled || !filePaths.length ? null : filePaths[0] };
+});
+
+ipcMain.handle("dialog:openDb", async () => {
+  const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    filters: [{ name: "SQLite Database", extensions: ["sqlite", "db", "sqlite3"] }],
   });
   return { filePath: canceled || !filePaths.length ? null : filePaths[0] };
 });
@@ -294,4 +320,42 @@ ipcMain.handle("env:save", (_e, { vars }) => {
     });
   writeFileSync(envPath, lines.join("\n") + "\n", "utf8");
   return { success: true };
+});
+
+// ─── DB registry IPC ──────────────────────────────────────────────────────────
+ipcMain.handle("db:list", () => loadDbs());
+
+ipcMain.handle("db:add", (_e, { name, path: dbPath }) => {
+  if (!name || !dbPath) throw new Error("name and path are required");
+  const registry = loadDbs();
+  if (registry.dbs.some((d) => d.name === name)) throw new Error(`"${name}" already exists`);
+  registry.dbs.push({ name, path: dbPath });
+  saveDbs(registry);
+  return registry;
+});
+
+ipcMain.handle("db:remove", (_e, { name }) => {
+  const registry = loadDbs();
+  if (registry.active === name) throw new Error("Cannot remove the active database");
+  registry.dbs = registry.dbs.filter((d) => d.name !== name);
+  saveDbs(registry);
+  return registry;
+});
+
+ipcMain.handle("db:switch", async (_e, { name }) => {
+  const registry = loadDbs();
+  if (!registry.dbs.some((d) => d.name === name)) throw new Error(`Unknown database: "${name}"`);
+  registry.active = name;
+  saveDbs(registry);
+  applyActiveDb(registry);
+
+  // Kill current server and restart with new DB path
+  serverReady = false;
+  if (serverProcess) {
+    serverProcess.kill();
+    serverProcess = null;
+  }
+  startServer();
+  await waitForServer(8000);
+  return registry;
 });

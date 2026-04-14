@@ -56,6 +56,33 @@ function renderThoughtCard(thought, onLoad) {
 }
 
 // ─── Pattern renderer ─────────────────────────────────────────────────────────
+const PATTERN_META = {
+  topic_spike: {
+    label: "Topic Spikes",
+    icon: "↑",
+    desc: (p) => p.message ?? "",
+    detail: null,
+  },
+  cross_context: {
+    label: "Cross-Context Clusters",
+    icon: "⇔",
+    desc: (p) => p.message ?? "",
+    detail: (p) => p.anchor ?? null,
+  },
+  recurring_unsolved: {
+    label: "Recurring Unsolved",
+    icon: "↻",
+    desc: (p) => p.message ?? "",
+    detail: (p) => p.thought ?? null,
+  },
+  dormant: {
+    label: "Dormant High-Value",
+    icon: "◉",
+    desc: (p) => p.message ?? "",
+    detail: (p) => p.thought ?? null,
+  },
+};
+
 function renderPatterns(patterns) {
   if (!Array.isArray(patterns) || !patterns.length) {
     return '<p class="list-empty">No significant patterns detected yet.</p>';
@@ -68,36 +95,34 @@ function renderPatterns(patterns) {
     groups[key].push(p);
   }
 
-  const humanType = {
-    topicSpike: "Topic Spikes",
-    crossContext: "Cross-Context Clusters",
-    recurringUnsolved: "Recurring Unsolved",
-    dormant: "Dormant High-Value",
-    other: "Patterns",
-  };
-
   return Object.entries(groups)
-    .map(
-      ([type, items]) => `
-    <div class="pattern-group">
-      <h4 class="pattern-title">${humanType[type] ?? type}</h4>
-      <ul class="pattern-list">
-        ${items
-          .map(
-            (p) => `
+    .map(([type, items]) => {
+      const meta = PATTERN_META[type];
+      const label = meta?.label ?? type;
+      const icon = meta?.icon ?? "·";
+
+      const itemsHtml = items
+        .map((p) => {
+          const desc = meta?.desc(p) ?? "";
+          const detail = meta?.detail?.(p) ?? null;
+          return `
           <li class="pattern-item">
-            ${p.topic ? `<span class="tag">${escapeHtml(p.topic)}</span> ` : ""}
-            ${p.count ? `<span class="muted">${p.count} thoughts</span> ` : ""}
-            ${p.text ? `<span>${escapeHtml(p.text.slice(0, 120))}</span>` : ""}
-            ${!p.topic && !p.count && !p.text ? `<span class="muted">${escapeHtml(JSON.stringify(p).slice(0, 150))}</span>` : ""}
-          </li>
-        `,
-          )
-          .join("")}
-      </ul>
-    </div>
-  `,
-    )
+            <div class="pattern-item-header">
+              <span class="pattern-icon">${icon}</span>
+              <span class="pattern-desc">${escapeHtml(desc)}</span>
+              ${p.topic ? `<span class="tag">${escapeHtml(p.topic)}</span>` : ""}
+            </div>
+            ${detail ? `<p class="pattern-detail">${escapeHtml(detail)}</p>` : ""}
+          </li>`;
+        })
+        .join("");
+
+      return `
+      <div class="pattern-group">
+        <h4 class="pattern-title">${escapeHtml(label)}</h4>
+        <ul class="pattern-list">${itemsHtml}</ul>
+      </div>`;
+    })
     .join("");
 }
 

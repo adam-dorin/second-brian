@@ -27,10 +27,10 @@ Start capturing your thoughts. This editor works like **Typora** — write markd
 
 ## Quick tips
 
-- Use **Ctrl+B** for bold, *Ctrl+I* for italic
+- Use **Ctrl+B** for bold, **Ctrl+I** for italic
 - Use the toolbar above for headings, lists, and code blocks
-- Type \`/\` for a slash command menu
-- Click **→ Save to Brain** to store this document as a thought
+- Press **Ctrl+K** to open the command palette
+- Press **Ctrl+Shift+S** to save the current document as a thought
 
 > Your second brain is ready. What are you thinking about?
 `;
