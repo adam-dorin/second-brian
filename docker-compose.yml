@@ -1,0 +1,24 @@
+services:
+  second-brian:
+    build: .
+    container_name: second-brian
+    ports:
+      - "8741:8741"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8741
+      - BRAIN_DB_NAME=brain-production.sqlite
+      # ANTHROPIC_API_KEY=   # only needed for `brain digest`
+    volumes:
+      - ./brain-production.sqlite:/app/brain-production.sqlite
+      - model-cache:/root/.cache
+    networks:
+      - claude-net
+
+networks:
+  claude-net:
+    name: claude-net
+    external: true
+
+volumes:
+  model-cache:
