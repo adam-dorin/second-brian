@@ -4,7 +4,7 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const DB_PATH = process.env.BRAIN_DB_PATH ?? join(__dirname, "..", "brain.sqlite");
+const DB_PATH = join(__dirname, "..", process.env.BRAIN_DB_NAME ?? "brain.sqlite");
 
 let _db = null;
 

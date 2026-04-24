@@ -22,7 +22,7 @@ const dbsPath = join(PROJECT_ROOT, "dbs.json");
 
 function loadDbs() {
   if (!existsSync(dbsPath)) {
-    const defaultPath = process.env.BRAIN_DB_PATH || join(PROJECT_ROOT, "brain.sqlite");
+    const defaultPath = process.env.BRAIN_DB_PATH || join(PROJECT_ROOT, "brain-production.sqlite");
     const initial = { active: "default", dbs: [{ name: "default", path: defaultPath }] };
     writeFileSync(dbsPath, JSON.stringify(initial, null, 2), "utf8");
     return initial;
