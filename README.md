@@ -2,7 +2,13 @@
 
 Local-first, bilingual (EN/RO) second brain. Semantic search over your notes, thoughts, and knowledge — runs entirely on your machine.
 
-**Stack:** Node.js · SQLite · sqlite-vec · transformers.js (multilingual embeddings) · Fastify · MCP
+**Stack:** 
+* Node.js
+* SQLite
+* sqlite-vec
+* transformers.js (multilingual embeddings)
+* Fastify
+* MCP
 
 ---
 
