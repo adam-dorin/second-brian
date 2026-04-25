@@ -1,6 +1,7 @@
 dist/
 out/
 node_modules/
+.claude/
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
