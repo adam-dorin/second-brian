@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import Fastify from "fastify";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
@@ -44,23 +45,66 @@ if (MCP_SECRET) {
 }
 
 // ─── MCP over HTTP ────────────────────────────────────────────────────────────
+// One McpServer+transport pair per session. Sessions are keyed by Mcp-Session-Id
+// and swept after 10 minutes of inactivity — covers clients (like claude -p) that
+// exit without sending DELETE.
 
-const mcpServer = new McpServer({ name: "brain", version: "1.0.0" });
-registerTools(mcpServer, db);
+const SESSION_TTL_MS = 10 * 60 * 1000;
+const mcpSessions = new Map(); // sessionId -> { transport, lastUsed }
 
-const mcpTransport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined });
-await mcpServer.connect(mcpTransport);
+setInterval(() => {
+  const cutoff = Date.now() - SESSION_TTL_MS;
+  for (const [id, session] of mcpSessions) {
+    if (session.lastUsed < cutoff) {
+      session.transport.close?.();
+      mcpSessions.delete(id);
+    }
+  }
+}, 60 * 1000);
+
+async function createMcpSession() {
+  const transport = new StreamableHTTPServerTransport({
+    sessionIdGenerator: () => randomUUID(),
+  });
+  const server = new McpServer({ name: "brain", version: "1.0.0" });
+  registerTools(server, db);
+  transport.onclose = () => {
+    if (transport.sessionId) mcpSessions.delete(transport.sessionId);
+  };
+  await server.connect(transport);
+  return transport;
+}
 
 app.post("/mcp", async (req, reply) => {
-  await mcpTransport.handleRequest(req.raw, reply.raw, req.body);
+  const sessionId = req.headers["mcp-session-id"];
+
+  if (sessionId && mcpSessions.has(sessionId)) {
+    const session = mcpSessions.get(sessionId);
+    session.lastUsed = Date.now();
+    await session.transport.handleRequest(req.raw, reply.raw, req.body);
+    return;
+  }
+
+  const transport = await createMcpSession();
+  await transport.handleRequest(req.raw, reply.raw, req.body);
+  if (transport.sessionId) {
+    mcpSessions.set(transport.sessionId, { transport, lastUsed: Date.now() });
+  }
 });
 
 app.get("/mcp", async (req, reply) => {
-  await mcpTransport.handleRequest(req.raw, reply.raw);
+  const session = mcpSessions.get(req.headers["mcp-session-id"]);
+  if (!session) { reply.code(404).send(); return; }
+  session.lastUsed = Date.now();
+  await session.transport.handleRequest(req.raw, reply.raw);
 });
 
 app.delete("/mcp", async (req, reply) => {
-  await mcpTransport.handleRequest(req.raw, reply.raw);
+  const sessionId = req.headers["mcp-session-id"];
+  const session = mcpSessions.get(sessionId);
+  if (!session) { reply.code(404).send(); return; }
+  await session.transport.handleRequest(req.raw, reply.raw);
+  mcpSessions.delete(sessionId);
 });
 
 // ─── Thoughts ─────────────────────────────────────────────────────────────────
